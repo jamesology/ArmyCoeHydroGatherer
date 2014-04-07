@@ -1,0 +1,17 @@
+{
+    "name" : "ArmyCoeHydroUpdater",
+    "version" : "0.1.0",
+    "author" : "James Gerstmann",
+    "private" : true,
+
+    "devDependencies" : {
+        "grunt" : "~0.4.0",
+		"grunt-contrib-watch" : "*",
+		"grunt-contrib-copy" : "*",
+		"grunt-contrib-jshint" : "*",
+		"grunt-simple-mocha" : "*",
+        "underscore": "*",
+        "dateformat" : "*",
+		"matchdep" : "*"
+    } 
+}
