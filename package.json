@@ -12,6 +12,7 @@
 		"grunt-simple-mocha" : "*",
         "underscore": "*",
         "dateformat" : "*",
+        "jsftp" : "*",
 		"matchdep" : "*"
     } 
 }

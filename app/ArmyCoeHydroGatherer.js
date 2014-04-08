@@ -2,6 +2,8 @@ var http = require("http");
 var fs = require("fs");
 var underscore = require("underscore");
 var dateFormat = require('dateFormat');
+var jsftp = require("jsftp");
+var settings = require("./settings");
 
 var debug = {
 	beginRequest: false,
@@ -9,7 +11,9 @@ var debug = {
 	handleData: true,
 	isDataLine: false,
 	splitData: false,
-	endResponse: false
+	endResponse: false,
+	sendFileToServer: true,
+	ftpResult: true
 };
 
 var fileStream;
@@ -36,7 +40,7 @@ function beginRequest(daysToRetrieve) {
 	if(debug.beginRequest) { console.log(url); }
 
 	fileStream = fs.createWriteStream("canyonData.json");
-	fileStream.on('finish', exit);
+	fileStream.on('finish', sendFileToServer);
 
 	http.get(url, processResults);
 }
@@ -102,6 +106,32 @@ function endResponse() {
 	if(debug.endResponse) { console.log("endResponse"); }
 
 	fileStream.end();
+}
+
+function sendFileToServer() {
+	if(debug.sendFileToServer) {
+		console.log("sendFileToServer");
+		console.log("host: " + settings.ftp.url);
+		console.log("user: " + settings.ftp.user);
+	}
+
+	var ftp = new jsftp({
+		host: settings.ftp.url,
+		//port: 3331, // defaults to 21
+		user: settings.ftp.user,
+		pass: settings.ftp.password
+	});
+
+	ftp.put('canyonData.json', 'james/rivers/canyonData.json', ftpResult);
+}
+
+function ftpResult(hadError)
+{
+	if(debug.ftpResult) { console.log("ftpResult"); }
+
+	if(hadError === false) { console.log("Transfer completed successfully."); }
+
+	exit();
 }
 
 function exit() {
