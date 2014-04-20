@@ -8,17 +8,21 @@ var settings = require("./settings");
 var debug = {
 	beginRequest: false,
 	processResults: false,
-	handleData: true,
+	processError: true,
+	handleData: false,
 	isDataLine: false,
 	splitData: false,
 	endResponse: false,
-	sendFileToServer: true,
-	ftpResult: true
+	sendFileToServer: false,
+	ftpResult: false
 };
 
 var fileStream;
+var initialWrite = true;
 var lastPartial = "";
-beginRequest(120);
+var getDays = 120;
+var retryCount = 0;
+beginRequest(getDays);
 
 function beginRequest(daysToRetrieve) {
 	if(debug.beginRequest){ 
@@ -42,7 +46,8 @@ function beginRequest(daysToRetrieve) {
 	fileStream = fs.createWriteStream("canyonData.json");
 	fileStream.on('finish', sendFileToServer);
 
-	http.get(url, processResults);
+	http.get(url, processResults)
+		.on('error', processError);
 }
 
 function processResults(response) {
@@ -54,6 +59,19 @@ function processResults(response) {
 	response.setEncoding('utf8');
 	response.on('data', handleData);
 	response.on('end', endResponse);
+}
+
+function processError(error) {
+	if(debug.processError) { console.log("processError"); }
+
+	if(error.code == 'ETIMEDOUT' && retryCount < settings.timeoutRetryCount){
+		if(debug.processError) { console.log("Request timed out. Retry #" + (retryCount + 1)); }
+		retryCount++;
+		beginRequest(getDays);
+	}
+	else {
+		console.log('Got Error: ' + error.message);
+	}
 }
 
 function handleData(chunk) {
@@ -75,7 +93,10 @@ function handleData(chunk) {
 	if(debug.handleData) { console.log(dataList); }
 
 	if(dataList.length) {
-		fileStream.write(dataList.join("\n") + "\n");
+		if(initialWrite) { fileStream.write("[\n"); initialWrite = false; }
+		else { fileStream.write(",\n"); }
+
+		fileStream.write(dataList.join(",\n"));
 	}
 }
 
@@ -105,7 +126,7 @@ function splitData(text) {
 function endResponse() {
 	if(debug.endResponse) { console.log("endResponse"); }
 
-	fileStream.end();
+	fileStream.end("\n]");
 }
 
 function sendFileToServer() {
@@ -125,8 +146,7 @@ function sendFileToServer() {
 	ftp.put('canyonData.json', 'james/rivers/canyonData.json', ftpResult);
 }
 
-function ftpResult(hadError)
-{
+function ftpResult(hadError) {
 	if(debug.ftpResult) { console.log("ftpResult"); }
 
 	if(hadError === false) { console.log("Transfer completed successfully."); }
@@ -135,5 +155,6 @@ function ftpResult(hadError)
 }
 
 function exit() {
+
 	process.exit();
 }
