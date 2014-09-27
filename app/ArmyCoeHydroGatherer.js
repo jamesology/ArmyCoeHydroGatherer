@@ -10,11 +10,11 @@ var debug = {
 	processResults: false,
 	processError: true,
 	handleData: false,
-	isDataLine: false,
-	splitData: false,
+	isDataLine: true,
+	splitData: true,
 	endResponse: false,
 	sendFileToServer: false,
-	ftpResult: false
+	ftpResult: true
 };
 
 var fileStream;
@@ -114,10 +114,13 @@ function isDataLine(text) {
 }
 
 function splitData(text) {
-	if(debug.splitData) { console.log("splitData"); }
+	if(debug.splitData) { 
+		console.log("splitData");
+		console.log(text);
+	}
 
 	var dataArray = text.split(";");
-	var data = { date: dataArray[1].trim(), elev: dataArray[2].trim(), flow: dataArray[3].trim() };
+	var data = { date: dataArray[0].trim(), elev: dataArray[1].trim(), flow: dataArray[2].trim() };
 	if(debug.splitData) { console.log(data); }
 
 	return data;
